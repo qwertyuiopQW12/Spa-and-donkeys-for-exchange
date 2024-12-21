@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معرض الصور الديناميكي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        #gallery {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .gallery-image {
+            width: 150px;
+            height: 150px;
+            object-fit: contain; /* لضمان ظهور الصورة كاملة */
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 1s ease, opacity 1s ease;
+            opacity: 1;
+        }
+
+        .gallery-image.expanded {
+            width: 300px;
+            height: 300px;
+            z-index: 10;
+            position: relative;
+            transform: scale(1.2);
+        }
+
+        .hidden {
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+    </style>
+</head>
+<body>
+    <h1>معرض الصور الديناميكي</h1>
+    <div id="upload-section">
+        <input type="file" id="image-upload" accept="image/*" multiple>
+        <button onclick="uploadImages()">رفع الصور</button>
+    </div>
+    <div id="gallery"></div>
+
+    <script>
+        const gallery = document.getElementById("gallery");
+        const images = [];
+        let currentIndex = 0;
+
+        function uploadImages() {
+            const fileInput = document.getElementById("image-upload");
+            const files = Array.from(fileInput.files);
+
+            if (files.length > 10) {
+                alert("يرجى اختيار 10 صور فقط!");
+                return;
+            }
+
+            files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    images.push(e.target.result);
+                    if (images.length <= 3) {
+                        addImageToGallery(e.target.result); // عرض أول 3 صور
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            fileInput.value = ""; // إعادة تعيين المدخل
+        }
+
+        function addImageToGallery(imgSrc) {
+            const img = document.createElement("img");
+            img.src = imgSrc;
+            img.className = "gallery-image";
+            gallery.appendChild(img);
+        }
+
+        function updateGallery() {
+            if (images.length > 3) {
+                const allImages = Array.from(document.querySelectorAll(".gallery-image"));
+
+                // إعادة تعيين أي تكبير للصورة السابقة
+                allImages.forEach((img) => img.classList.remove("expanded"));
+
+                // تحديد الصورة الجديدة وتكبيرها
+                const nextImage = images[currentIndex % images.length];
+                const imgElement = document.createElement("img");
+                imgElement.src = nextImage;
+                imgElement.className = "gallery-image expanded hidden";
+                gallery.appendChild(imgElement);
+
+                setTimeout(() => {
+                    imgElement.classList.remove("hidden");
+                }, 100);
+
+                // إزالة الصورة القديمة
+                if (allImages.length > 0) {
+                    allImages[0].classList.add("hidden");
+                    setTimeout(() => {
+                        gallery.removeChild(allImages[0]);
+                    }, 1000);
+                }
+
+                currentIndex = (currentIndex + 1) % images.length;
+            }
+        }
+
+        // تحديث الصور كل 30 ثانية
+        setInterval(() => {
+            if (images.length > 3) {
+                updateGallery();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
